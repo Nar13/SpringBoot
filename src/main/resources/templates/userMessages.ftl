@@ -1,6 +1,7 @@
 <#import "parts/common.ftl" as c>
 
 <@c.page>
+<title>User Messages</title>
 <h3>${userChannel.username}</h3>
     <#if !isCurrentUser>
         <#if isSubscriber>

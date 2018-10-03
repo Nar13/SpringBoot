@@ -5,6 +5,10 @@ import com.example.sweet.domain.User;
 import com.example.sweet.repos.MessageRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,17 +40,24 @@ public class MainController {
         return "greeting";
     }
 
+
+
     @GetMapping("/main")
-    public String main(@RequestParam(required = false, defaultValue = "") String filter, Model model) {
-        Iterable<Message> messages;
+    public String main(@RequestParam(required = false,
+            defaultValue = "") String filter,
+                       Model model,
+                       @PageableDefault(sort = {"id"},direction = Sort.Direction.DESC) Pageable pageable
+                       ) {
+        Page<Message> page;
 
         if (filter != null && !filter.isEmpty()) {
-            messages = messageRepo.findByTag(filter);
+            page = messageRepo.findByTag(filter, pageable);
         } else {
-            messages = messageRepo.findAll();
+            page = messageRepo.findAll(pageable);
         }
 
-        model.addAttribute("messages", messages);
+        model.addAttribute("page", page);
+        model.addAttribute("url", "/main");
         model.addAttribute("filter", filter);
 
         return "main";
@@ -61,6 +72,7 @@ public class MainController {
             @RequestParam("file") MultipartFile file
     ) throws IOException {
         message.setAuthor(user);
+        System.err.println("_________"+message.getAuthor());
 
         if (bindingResult.hasErrors()) {
             Map<String, String> errorsMap = ControllerUtils.getErrors(bindingResult);
@@ -100,7 +112,7 @@ public class MainController {
     }
 
     @GetMapping("/user-messages/{user}")
-    public String userMessges(
+    public String userMessages(
             @AuthenticationPrincipal User currentUser,
             @PathVariable User user,
             Model model,
